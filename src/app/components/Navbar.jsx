@@ -7,6 +7,7 @@ import { logout } from "@/features/auth/authSlice";
 import { Search, Plus, User, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
 import CreateNewBoardModal from "./CreateBoardModal";
+import api from "../api/axios";
 
 export default function Navbar() {
   const router = useRouter();
@@ -20,11 +21,9 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const boards = ["Marketing Board", "Dev Sprint", "Design Team"]; // fake data
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // 1. Clear jwt cookie
-    document.cookie =
-      "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax;";
-
+    await api.get("/api/user/logout", { withCredentials: true });
     // 2. Clear Redux user state
     dispatch(logout());
 
