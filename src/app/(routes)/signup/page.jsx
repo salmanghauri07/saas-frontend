@@ -34,7 +34,7 @@ export default function SignupPage() {
       const res = await api.post("/api/user/signup", formData);
       setToken(res.data.data.otpToken);
       toast.success("Signup successful!");
-      setTimeout(() => setShowOtpModal(true), 500);
+      setShowOtpModal(true);
     } catch (err) {
       console.log("Signup failed:", err.message);
     }
@@ -42,7 +42,7 @@ export default function SignupPage() {
 
   const handleOtpOk = () => {
     setShowOtpModal(false);
-    router.push(`/otp?token=${token}`);
+    router.push(`/otp`);
   };
 
   return (

@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/app/api/axios";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 const otpSchema = z.object({
   otp: z
@@ -60,10 +61,12 @@ export default function OtpPage() {
       <div className="w-full max-w-md rounded-2xl bg-neutral-900 p-8 shadow-xl relative z-10">
         {/* 🔹 Logo Area (same as signup) */}
         <div className="flex justify-center">
-          <img
+          <Image
             src="/images/logo.png"
             alt="Logo"
-            className="h-[8rem] w-[8rem] w-auto"
+            width={128}
+            height={128}
+            unoptimized
           />
         </div>
 

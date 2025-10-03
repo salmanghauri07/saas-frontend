@@ -5,7 +5,7 @@ export function middleware(req) {
   const { pathname } = req.nextUrl;
 
   // Public routes
-  const publicRoutes = ["/login", "/signup", "/verifyOtp"];
+  const publicRoutes = ["/login", "/signup", "/otp"];
   const isPublic = publicRoutes.some((route) => pathname.startsWith(route));
 
   if (!refreshToken && !isPublic) {

@@ -1,83 +1,60 @@
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-let accessToken = null;
-
-// helper to set token after login
-export const setAccessToken = (token) => {
-  accessToken = token;
-  if (typeof window !== "undefined") {
-    if (token) {
-      localStorage.setItem("accessToken", token);
-    } else {
-      localStorage.removeItem("accessToken");
-    }
-  }
-};
-
-// restore token on client-side when app loads
-export const loadAccessToken = () => {
-  if (typeof window !== "undefined") {
-    accessToken = localStorage.getItem("accessToken");
-  }
-};
-
 const api = axios.create({
-  baseURL: "http://localhost:5000/", // adjust if needed
+  baseURL: "http://localhost:5000/",
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
 
-// ✅ Request interceptor → attach access token
+// ✅ Request interceptor → always grab token from localStorage
 api.interceptors.request.use((config) => {
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
 
 // ✅ Response interceptor
 api.interceptors.response.use(
-  (response) => response, // pass through success
+  (res) => res,
   async (error) => {
-    let message = "Something went wrong. Please try again.";
-
     const originalRequest = error.config;
+    console.log(error.response.status, "error response status");
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        // Call refresh token API
-        const { data } = await axios.post(
-          "http://localhost:5000/api/user/refresh",
-          {},
-          { withCredentials: true } // cookie is sent automatically
-        );
+        // call refresh endpoint
+        const res = await axios.get("http://localhost:5000/api/user/refresh", {
+          withCredentials: true,
+        });
+        // store new token in localStorage
+        localStorage.setItem("accessToken", res.data.data.accessToken);
 
-        // Update access token in memory
-        accessToken = data.accessToken;
-
-        // Retry the original request with new token
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        // retry failed request with new token
+        originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed → force logout
+        console.log(refreshError, "refresh error");
         toast.error("Session expired. Please log in again.");
-        accessToken = null;
-        window.location.href = "/login";
+        // localStorage.removeItem("accessToken");
+        // window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
+
+    let message = "Something went wrong.";
     if (Array.isArray(error.response?.data?.message)) {
-      // Multiple validation errors → take first one, or join them
       message = error.response.data.message[0]?.message || message;
     } else if (typeof error.response?.data?.message === "string") {
       message = error.response.data.message;
     }
-
-    // Show toast for error
     toast.error(message);
 
-    return Promise.reject(error); // keep rejecting so caller can handle if needed
+    return Promise.reject(error);
   }
 );
 

@@ -1,7 +1,10 @@
 import { Poppins } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { Provider } from "react-redux";
+import Providers from "./Providers";
+import store from "./store/store";
 import "./globals.css";
-import AccessTokenProvider from "./AccessTokenProvided";
+
 const poppins = Poppins({
   subsets: ["latin"], // character set
   weight: ["400", "500", "600", "700"], // choose weights you need
@@ -17,7 +20,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
-        <AccessTokenProvider>{children}</AccessTokenProvider>
+        <Providers>{children}</Providers>
         <Toaster position="top-right" reverseOrder={false} />
       </body>
     </html>

@@ -1,20 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "@/features/auth/authSlice";
 import { Search, Plus, User, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
+import CreateNewBoardModal from "./CreateBoardModal";
 
 export default function Navbar() {
   const router = useRouter();
+  const dispatch = useDispatch();
 
+  const user = useSelector((state) => state.auth.user);
+  console.log("Navbar user:", user);
   const [searchOpen, setSearchOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const boards = ["Marketing Board", "Dev Sprint", "Design Team"]; // fake data
+  const handleLogout = () => {
+    // 1. Clear jwt cookie
+    document.cookie =
+      "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax;";
 
+    // 2. Clear Redux user state
+    dispatch(logout());
+
+    // 3. Close dropdown
+    setDropdownOpen(false);
+
+    // 4. Redirect to login page
+    router.push("/login");
+  };
   return (
     <nav className="bg-neutral-900">
       <div className="container">
@@ -67,17 +86,25 @@ export default function Navbar() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center hover:ring-2 hover:ring-gray-500"
               >
-                <User className="w-5 h-5 text-gray-200" />
+                {user?.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt="User Avatar"
+                    width={36}
+                    height={36}
+                    className=" rounded-full"
+                  />
+                ) : (
+                  <User className="w-5 h-5 text-gray-200" />
+                )}
               </button>
 
               {/* Dropdown menu */}
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-gray-900 shadow-md rounded-md py-2 border border-gray-700 z-50">
                   <div className="px-4 py-2 border-b border-gray-700 text-sm text-gray-300">
-                    <div className="font-medium">John Doe</div>
-                    <div className="text-xs text-gray-500">
-                      john@example.com
-                    </div>
+                    <div className="font-medium">{user?.username}</div>
+                    <div className="text-xs text-gray-500">{user?.email}</div>
                   </div>
                   <button
                     className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm flex items-center gap-2 text-gray-300"
@@ -93,7 +120,7 @@ export default function Navbar() {
                   </button>
                   <button
                     className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm flex items-center gap-2 text-red-400"
-                    onClick={() => console.log("logout")}
+                    onClick={handleLogout}
                   >
                     <LogOut className="w-4 h-4" /> Logout
                   </button>
@@ -146,46 +173,7 @@ export default function Navbar() {
 
           {/* ➕ Create Board Modal */}
           {createOpen && (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-              <div className="bg-gray-900 w-full max-w-md p-6 rounded-lg shadow-lg border border-gray-700">
-                <h2 className="text-lg font-semibold mb-4 text-white">
-                  Create a new board
-                </h2>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    console.log("Board created");
-                    setCreateOpen(false);
-                  }}
-                  className="space-y-4"
-                >
-                  <input
-                    placeholder="Board title"
-                    required
-                    className="w-full px-4 py-2 bg-black text-gray-200 border border-gray-700 rounded-md"
-                  />
-                  <textarea
-                    placeholder="Description"
-                    className="w-full px-4 py-2 bg-black text-gray-200 border border-gray-700 rounded-md"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setCreateOpen(false)}
-                      className="px-4 py-2 rounded-md border border-gray-700 text-gray-300 hover:bg-gray-800"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                    >
-                      Create
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+            <CreateNewBoardModal open={createOpen} setOpen={setCreateOpen} />
           )}
         </div>
       </div>

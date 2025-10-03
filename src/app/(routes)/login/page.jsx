@@ -6,8 +6,10 @@ import { toast } from "react-hot-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import api, { setAccessToken } from "@/app/api/axios";
+import api from "@/app/api/axios"; // notice: no setAccessToken import
 import Image from "next/image";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "@/features/auth/authSlice";
 
 // ✅ Login schema
 const loginSchema = z.object({
@@ -17,6 +19,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const {
     register,
@@ -36,10 +39,11 @@ export default function LoginPage() {
         withCredentials: true,
       });
       const token = res.data.data.accessToken;
-      console.log("Login successful, access token:", token);
+      const user = res.data.data.user;
+      dispatch(loginSuccess(user)); // ✅ store user data in Redux
+      console.log("User data:", user);
 
-      // set it in memory and localStorage
-      setAccessToken(token);
+      // ✅  put token in localStorage
       localStorage.setItem("accessToken", token);
 
       toast.success("Login successful!");
@@ -47,6 +51,7 @@ export default function LoginPage() {
       router.push("/");
     } catch (err) {
       console.error("Login error:", err);
+      toast.error("Login failed. Please try again.");
     }
   };
 
@@ -61,7 +66,7 @@ export default function LoginPage() {
             alt="Logo"
             width={128}
             height={128}
-            className="h-[8rem] w-[8rem] w-auto"
+            className="h-[8rem] w-[8rem]"
             unoptimized
           />
         </div>
@@ -109,7 +114,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Login Link */}
+        {/* Signup Link */}
         <div className="mt-4 text-center">
           <span className="text-gray-400">Don’t have an account? </span>
           <Link
