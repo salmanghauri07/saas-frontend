@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "./components/Navbar";
 import api from "./api/axios";
 import CreateNewBoardModal from "./components/CreateBoardModal";
+import { useRouter } from "next/navigation";
 
 const gradients = [
   "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500",
@@ -25,6 +26,7 @@ const gradients = [
 ];
 
 export default function BoardsPage() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [boards, setBoards] = useState([]);
 
@@ -50,6 +52,7 @@ export default function BoardsPage() {
                 className={`rounded-2xl p-6 shadow-lg cursor-pointer transition transform hover:scale-105 hover:shadow-xl ${
                   gradients[index % gradients.length]
                 }`}
+                onClick={() => router.push(`/board/${board._id}`)}
               >
                 <h2 className="text-xl font-semibold mb-2">{board.title}</h2>
                 <p className="text-sm opacity-90 line-clamp-2">

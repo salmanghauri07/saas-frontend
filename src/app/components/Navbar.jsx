@@ -8,13 +8,13 @@ import { Search, Plus, User, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
 import CreateNewBoardModal from "./CreateBoardModal";
 import api from "../api/axios";
+import { persistor } from "../store/store";
 
 export default function Navbar() {
   const router = useRouter();
   const dispatch = useDispatch();
 
   const user = useSelector((state) => state.auth.user);
-  console.log("Navbar user:", user);
   const [searchOpen, setSearchOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -26,6 +26,7 @@ export default function Navbar() {
     await api.get("/api/user/logout", { withCredentials: true });
     // 2. Clear Redux user state
     dispatch(logout());
+    persistor.purge();
 
     // 3. Close dropdown
     setDropdownOpen(false);
