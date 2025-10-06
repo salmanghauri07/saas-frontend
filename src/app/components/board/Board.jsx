@@ -1,6 +1,5 @@
 "use client";
 import api from "@/app/api/axios";
-import BoardHeader from "@/app/components/BoardHeader";
 import Navbar from "@/app/components/Navbar";
 import { useEffect, useState } from "react";
 import BoardLayout from "./BoardLayout";
@@ -32,7 +31,17 @@ const Board = ({ id }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div>
         </div>
       ) : (
-        <BoardLayout title={board.title} />
+        // Passing lists from board data (or fallback dummy lists)
+        <BoardLayout
+          title={board.title}
+          initialLists={
+            board.lists || [
+              { id: "list-1", title: "To Do" },
+              { id: "list-2", title: "In Progress" },
+              { id: "list-3", title: "Done" },
+            ]
+          }
+        />
       )}
     </>
   );

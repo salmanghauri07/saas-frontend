@@ -1,6 +1,22 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import BoardHeader from "../BoardHeader";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  pointerWithin,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import SortableList from "./SortableList";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 
 const gradients = [
   "from-indigo-500 via-purple-500 to-pink-500",
@@ -12,51 +28,75 @@ const gradients = [
   "from-slate-400 via-gray-600 to-slate-800",
 ];
 
-export default function BoardLayout({ children, title }) {
+export default function BoardLayout({ title, initialLists }) {
+  const [activeId, setActiveId] = useState(null);
+  const [lists, setLists] = useState(initialLists);
+
+  // Setup sensors for drag activation
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 1 } })
+  );
+
   const gradient = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * gradients.length);
     return gradients[randomIndex];
   }, []);
 
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over) return;
+    if (active.id !== over?.id) {
+      setLists((prevLists) => {
+        const oldIndex = prevLists.findIndex((l) => l.id === active.id);
+        const newIndex = prevLists.findIndex((l) => l.id === over.id);
+        return arrayMove(prevLists, oldIndex, newIndex);
+      });
+    }
+    setActiveId(null);
+  };
+
   return (
     <div
       className={`flex flex-col bg-gradient-to-br ${gradient} 
-      min-h-screen border border-white/40 text-white overflow-hidden`}
+      min-h-[91.9vh] text-white overflow-hidden`}
     >
-      {/* Board Header */}
       <BoardHeader title={title} />
 
-      {/* Board Content */}
       <div
         className="flex-1 bg-white/10 backdrop-blur-md rounded-t-2xl 
         p-6 flex items-start gap-4 overflow-x-auto overflow-y-hidden
         transition-all duration-300"
       >
-        {children ? children : <DefaultList />}
-      </div>
-    </div>
-  );
-}
+        <DndContext
+          sensors={sensors}
+          modifiers={[restrictToWindowEdges]}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={lists.map((l) => l.id)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {lists.map((list) => (
+              <SortableList key={list.id} id={list.id} title={list.title} />
+            ))}
+          </SortableContext>
 
-/* 🧩 Default Trello-like List */
-function DefaultList() {
-  return (
-    <div className="min-w-[260px] bg-white/15 border border-white/10 rounded-xl shadow-md p-4 text-white backdrop-blur-sm flex-shrink-0">
-      <h3 className="font-semibold text-lg mb-3">Getting Started</h3>
-      <ul className="space-y-2 text-sm">
-        <li className="bg-white/10 rounded-md px-3 py-2">
-          Click + to add a new list
-        </li>
-        <li className="bg-white/10 rounded-md px-3 py-2">
-          Drag cards to reorder them
-        </li>
-        <li className="bg-white/10 rounded-md px-3 py-2">
-          Invite your team members
-        </li>
-      </ul>
-      <button className="mt-4 w-full bg-white/20 hover:bg-white/30 text-white py-1.5 rounded-md text-sm font-medium transition">
-        + Add a list
-      </button>
+          <DragOverlay>
+            {activeId ? (
+              <SortableList
+                id={activeId}
+                title={lists.find((l) => l.id === activeId)?.title}
+              />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      </div>
     </div>
   );
 }
